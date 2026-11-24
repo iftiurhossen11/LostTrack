@@ -582,7 +582,21 @@ async function searchBangladeshLocations() {
       isBangladeshPoint(Number(result.latitude), Number(result.longitude)));
     results.replaceChildren();
     if (!matches.length) {
-      results.textContent = "No Bangladesh location found. Try another spelling or choose a map pin.";
+      const message = document.createElement("p");
+      message.className = "small";
+      message.textContent = "No map result found for this spelling.";
+      const custom = document.createElement("button");
+      custom.type = "button";
+      custom.className = "location-search-result";
+      custom.dataset.name = query.slice(0, 155);
+      custom.dataset.latitude = "";
+      custom.dataset.longitude = "";
+      const name = document.createElement("strong");
+      name.textContent = `Use "${query}" as a text location`;
+      const address = document.createElement("small");
+      address.textContent = "No map pin will be added.";
+      custom.append(name, address);
+      results.append(message, custom);
       return;
     }
     matches.forEach(result => {
@@ -611,14 +625,26 @@ async function searchBangladeshLocations() {
 async function selectBangladeshLocation(option) {
   try {
     const name = option.dataset.name.trim().slice(0, 155);
-    const latitude = Number(option.dataset.latitude);
-    const longitude = Number(option.dataset.longitude);
+    const latitude = option.dataset.latitude ? Number(option.dataset.latitude) : NaN;
+    const longitude = option.dataset.longitude ? Number(option.dataset.longitude) : NaN;
+    selectCampusLocation(name);
+    if (!name) {
+      notify("Enter a location name.");
+      return;
+    }
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+      document.querySelector('[name="latitude"]').value = "";
+      document.querySelector('[name="longitude"]').value = "";
+      const status = document.querySelector("#location-pin-status");
+      if (status) status.textContent = `Selected as text: ${name} · No map pin added`;
+      document.querySelector("#location-search-results").replaceChildren();
+      return;
+    }
     await loadBangladeshBoundary();
-    if (!name || !isBangladeshPoint(latitude, longitude)) {
+    if (!isBangladeshPoint(latitude, longitude)) {
       notify("Choose a valid location in Bangladesh.");
       return;
     }
-    selectCampusLocation(name);
     document.querySelector('[name="latitude"]').value = latitude.toFixed(6);
     document.querySelector('[name="longitude"]').value = longitude.toFixed(6);
     if (!setLocationPickerPin?.(latitude, longitude, name)) {

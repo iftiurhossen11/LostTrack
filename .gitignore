@@ -5,3 +5,9 @@ backend/storage/uploads/
 .env.*
 !.env.example
 node_modules/
+*.pptx
+*.docx
+*.pdf
+*.zip
+*.jpg
+*.jpeg
